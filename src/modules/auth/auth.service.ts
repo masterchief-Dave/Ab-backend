@@ -1,6 +1,5 @@
 import { OtpReasonEnum } from "../../../generated/prisma/enums";
 import { emailProducer, type EmailProducer } from "../../queues/email.producer";
-import { mailService, type MailService } from "../../services/mail.service";
 import { ApiError, ApiSuccess } from "../../utils/api-response.utils";
 import {
   comparePassword,
