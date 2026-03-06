@@ -62,18 +62,6 @@ export class MailService {
       };
 
       const info = await this.transporter.sendMail(mailOptions);
-
-      logger.info(
-        {
-          messageId: info.messageId,
-          accepted: info.accepted,
-          rejected: info.rejected,
-          pending: (info as any).pending,
-          response: info.response,
-          envelope: info.envelope,
-        },
-        "Email send result",
-      );
       return info;
     } catch (error: unknown) {
       logger.fatal({ err: error }, "Error sending email:");
