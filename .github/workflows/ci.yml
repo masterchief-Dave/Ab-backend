@@ -1,0 +1,53 @@
+name: CI/CD Pipeline
+
+on:
+  pull_request:
+    branches: [staging]
+  push:
+    branches: [staging]
+
+concurrency:
+  group: staging-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: CI (Lint + Build)
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: ${{secrets.DATABASE_URL}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Bun
+        run: curl -fsSL https://bun.sh/install | bash
+        shell: bash
+
+      - name: Add Bun to PATH
+        run: echo "$HOME/.bun/bin" >> $GITHUB_PATH
+        shell: bash
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Lint
+        run: bun run eslint
+
+      - name: Prisma Validate
+        run: npx prisma validate
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Build
+        run: bun run build

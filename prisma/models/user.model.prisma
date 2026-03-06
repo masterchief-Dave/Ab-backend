@@ -1,0 +1,45 @@
+enum RoleEnum {
+  user
+  admin
+  guest
+  super_admin
+}
+
+enum ProviderEnum {
+  credentials
+  google
+}
+
+enum GenderEnum {
+  male
+  female
+}
+
+model User {
+  id              String     @id @default(uuid())
+  email           String     @unique
+  firstName       String
+  lastName        String
+  password        String
+  role            RoleEnum   @default(user)
+  isActive        Boolean    @default(true)
+  isVerified      Boolean    @default(false)
+  passwordVersion Int        @default(1)
+  jwtVersion      Int        @default(1)
+  deletedAt       DateTime?
+  isDeleted       Boolean    @default(false)
+  gender          GenderEnum
+
+  provider   ProviderEnum @default(credentials)
+  providerId String?      @unique
+
+  profilePictureSecureUrl String?
+  profilePicturePublicId  String?
+
+  deletedById  String?
+  deletedBy    User?   @relation("UsersDeletedBy", fields: [deletedById], references: [id])
+  deletedUsers User[]  @relation("UsersDeletedBy")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

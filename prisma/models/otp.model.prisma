@@ -1,0 +1,28 @@
+enum OtpReasonEnum {
+  login
+  register
+  password_reset
+  email_verification
+  phone_verification
+  otp_verification
+}
+
+model OTP {
+  id String @id @default(uuid())
+
+  email  String
+  otp    String
+  reason OtpReasonEnum
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  expiresAt   DateTime?
+  resendAfter DateTime
+
+  attempts    Int @default(0)
+  maxAttempts Int @default(6)
+
+  @@index([email])
+  @@index([expiresAt])
+}
