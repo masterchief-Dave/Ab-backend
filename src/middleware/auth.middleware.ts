@@ -8,7 +8,7 @@ const isAuth = async (
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
-  const authHeader = req.cookies.token;
+  const authHeader = req.cookies.accessToken;
   if (!authHeader) {
     throw ApiError.unauthorized("No token provided");
   }

@@ -4,6 +4,7 @@ import { ApiError } from "../../utils/api-response.utils";
 import generateOTP from "../../utils/generate-otp.utils";
 import { compareOTP, hashOTP } from "../../utils/validation.utils";
 import { otpRepository, OtpRepository } from "./otp.repository";
+import { logger } from "../../middleware/logger.middleware";
 
 export class OtpService {
   constructor(private otpRepository: OtpRepository) {}
@@ -45,13 +46,24 @@ export class OtpService {
     return { otp: { ...otp, otp: otpCode } };
   }
 
-  public async verifyOTP(otp: string, email: string, reason: OtpReasonEnum) {
+  public async verifyOTP({
+    otp,
+    email,
+    reason,
+  }: {
+    otp: string;
+    email: string;
+    reason: OtpReasonEnum;
+  }) {
     const normalizedEmail = email.trim().toLowerCase();
+    console.log({ email, reason });
 
     const record = await this.otpRepository.findOtpWithReason(
       normalizedEmail,
       reason,
     );
+
+    logger.info({ record }, "otp record: ");
 
     if (!record || (record.expiresAt && record.expiresAt < new Date())) {
       throw ApiError.badRequest("Expired or missing OTP");

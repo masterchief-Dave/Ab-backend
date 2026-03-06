@@ -1,8 +1,14 @@
 import type { Request, Response } from "express";
 import { cookieOptions } from "./auth.helper";
-import type { LoginDto, RegisterDto } from "./auth.schema";
+import type {
+  LoginDto,
+  RegisterDto,
+  ResendOtpDto,
+  VerifyOtpDto,
+} from "./auth.schema";
 import { authService, type AuthService } from "./auth.service";
 import { ApiError, ApiSuccess } from "../../utils/api-response.utils";
+import type { AuthenticatedUser } from "./auth.interface";
 
 export class AuthController {
   constructor(private authService: AuthService) {}
@@ -53,12 +59,35 @@ export class AuthController {
     res.status(result.status_code).json(result);
   };
 
-  public getSession = async () => {};
+  public getSession = async (req: Request, res: Response) => {
+    const user = req.user as AuthenticatedUser;
+    const result = ApiSuccess.ok("Session found", { user });
+    res.status(result.status_code).json(result);
+  };
 
   public logout = async (req: Request, res: Response) => {
     res.clearCookie("accessToken");
     res.clearCookie("refreshToken");
     res.status(200).json(ApiSuccess.ok("Logout successful"));
+  };
+
+  public resendOtp = async (req: Request, res: Response) => {
+    const dto = req.body as ResendOtpDto;
+    const result = await this.authService.resendOtp(dto);
+    res.status(result.status_code).json(result);
+  };
+
+  public verifyOtp = async (req: Request, res: Response) => {
+    const dto = req.body as VerifyOtpDto;
+    const result = await this.authService.verifyOtp(dto);
+    res.status(result.status_code).json(result);
+  };
+
+  public getProfile = async (req: Request, res: Response) => {
+    const user = req.user as AuthenticatedUser;
+    const userId = user.id;
+    const result = await this.authService.findProfile(userId);
+    res.status(result.status_code).json(result);
   };
 }
 

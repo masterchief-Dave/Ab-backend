@@ -22,7 +22,7 @@ export class AuthSchemas {
     })
     .strict();
 
-  static verifyOTP = z
+  static verifyOtp = z
     .object({
       email: z.email("Please provide a valid email address").toLowerCase(),
       otp: z.string().min(6, "OTP must be at least 6 characters long").max(6),
@@ -30,7 +30,7 @@ export class AuthSchemas {
     })
     .strict();
 
-  static sendOTP = z
+  static resendOtp = z
     .object({
       email: z.email("Please provide a valid email address").toLowerCase(),
       reason: z.enum(OtpReasonEnum),
@@ -56,6 +56,7 @@ export class AuthSchemas {
     .strict();
 }
 
-export type VerifyOtpDTO = z.infer<typeof AuthSchemas.verifyOTP>;
+export type VerifyOtpDto = z.infer<typeof AuthSchemas.verifyOtp>;
 export type LoginDto = z.infer<typeof AuthSchemas.login>;
 export type RegisterDto = z.infer<typeof AuthSchemas.register>;
+export type ResendOtpDto = z.infer<typeof AuthSchemas.resendOtp>;
