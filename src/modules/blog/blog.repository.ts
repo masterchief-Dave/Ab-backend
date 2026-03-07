@@ -24,14 +24,14 @@ export class BlogRepository {
     private temporaryUploadService: TemporaryUploadService,
   ) {}
 
-  async create(dto: CreateBlogDto, userId: string) {
+  async create(dto: CreateBlogDto, slug: string, userId: string) {
     const usedPublicIds = [dto.blogPublicId].filter(Boolean) as string[];
 
     return this.prisma.$transaction(async (tx) => {
       const blog = await tx.blog.create({
         data: {
           title: dto.title,
-          slug: dto.slug,
+          slug: slug,
           content: dto.content as Prisma.InputJsonValue,
           tags: dto.tags,
           blogPublicId: dto.blogPublicId ?? null,
@@ -91,7 +91,6 @@ export class BlogRepository {
         where: { id },
         data: {
           title: dto.title ?? undefined,
-          slug: dto.slug ?? undefined,
           content:
             dto.content !== undefined
               ? (dto.content as Prisma.InputJsonValue)
@@ -194,6 +193,7 @@ export class BlogRepository {
       search,
       tag,
       authorId,
+      authorIds,
       isPublished,
       page,
       limit,
@@ -217,6 +217,10 @@ export class BlogRepository {
 
     if (authorId) {
       where.authorId = authorId;
+    }
+
+    if (authorIds && authorIds.length > 0) {
+      where.authorId = { in: authorIds };
     }
 
     if (typeof isPublished === "boolean") {
