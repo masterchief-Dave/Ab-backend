@@ -3,6 +3,7 @@ import { z } from "zod";
 const EnvConfig = z.object({
   ADMIN_EMAIL: z.string().min(1).default("admin@example.com"),
   APP_NAME: z.string().default("Core HR"),
+  BULL_DASHBOARD_PASSWORD: z.string(),
   CLOUDINARY_NAME: z.string().min(1).default("cloudinary_name"),
   CLOUDINARY_API_KEY: z.string().min(1).default("api_key"),
   CLOUDINARY_API_SECRET: z.string().min(1).default("secret"),

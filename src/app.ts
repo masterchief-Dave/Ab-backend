@@ -47,13 +47,7 @@ export const createApp = () => {
 
   app.use(loggerMiddleware);
   app.use("/api/v1", apiRouter);
-  app.use(
-    "/admin/queues",
-    (req, res, next) => {
-      next();
-    },
-    serverAdapter.getRouter(),
-  );
+  app.use("/admin/queues", serverAdapter.getRouter());
 
   app.use(errorMiddleware);
   app.use(notFound);
