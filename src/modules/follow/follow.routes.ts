@@ -7,22 +7,9 @@ import {
 } from "../../middleware/validate-schema.middleware";
 import { followController } from "./follow.controller";
 import { FollowSchema } from "./follow.schema";
+import { ParamsSchema } from "../../utils/helpers/zod-validation.utils";
 
 const followRouter = express.Router();
-
-followRouter
-  .route("/:followingId")
-  .post(
-    isAuth,
-    validateParams(FollowSchema.followUserParams),
-    followController.followUser,
-  )
-  .delete(
-    isAuth,
-    validateParams(FollowSchema.followUserParams),
-    followController.unFollowUser,
-  )
-  .all(methodNotAllowed);
 
 followRouter
   .route("/following")
@@ -34,11 +21,34 @@ followRouter
   .all(methodNotAllowed);
 
 followRouter
+  .route("/followers")
+  .get(
+    isAuth,
+    validateQuery(FollowSchema.followListQuery),
+    followController.getFollowers,
+  )
+  .all(methodNotAllowed);
+
+followRouter
   .route("/feed")
   .get(
     isAuth,
     validateQuery(FollowSchema.followListQuery),
     followController.getFollowingFeed,
+  )
+  .all(methodNotAllowed);
+
+followRouter
+  .route("/:followingId")
+  .post(
+    isAuth,
+    validateParams(ParamsSchema.idParams("followingId", "Following ID")),
+    followController.followUser,
+  )
+  .delete(
+    isAuth,
+    validateParams(ParamsSchema.idParams("followingId", "Following ID")),
+    followController.unFollowUser,
   )
   .all(methodNotAllowed);
 

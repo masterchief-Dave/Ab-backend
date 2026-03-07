@@ -22,6 +22,8 @@ const EnvConfig = z.object({
   REDIS_PORT: z.coerce.number().min(1).default(6379),
   PORT: z.coerce.number().default(5000),
   WEB_APP_URL: z.url(),
+  UPLOAD_BASE_NAMESPACE: z.string().default("uploads"),
+  UPLOAD_DEFAULT_ENTITY: z.string().default("documents"),
 });
 
 export type Env = z.infer<typeof EnvConfig>;

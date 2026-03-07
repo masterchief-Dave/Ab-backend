@@ -38,6 +38,10 @@ blogRouter
 
 blogRouter
   .route("/:id")
+  .get(
+    validateParams(ParamsSchema.idParams("id", "Blog ID")),
+    blogController.getOne,
+  )
   .patch(
     isAuth,
     validateParams(ParamsSchema.idParams("id", "Blog ID")),
@@ -57,14 +61,6 @@ blogRouter
     isAuth,
     validateParams(ParamsSchema.idParams("id", "Blog ID")),
     blogController.hardDelete,
-  )
-  .all(methodNotAllowed);
-
-blogRouter
-  .route("/:id")
-  .get(
-    validateParams(ParamsSchema.idParams("id", "Blog ID")),
-    blogController.getOne,
   )
   .all(methodNotAllowed);
 

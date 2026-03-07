@@ -201,7 +201,9 @@ export class BlogRepository {
       sortOrder,
     } = filters;
 
-    const where: Prisma.BlogWhereInput = {};
+    const where: Prisma.BlogWhereInput = {
+      isDeleted: false,
+    };
 
     if (search) {
       where.OR = [
