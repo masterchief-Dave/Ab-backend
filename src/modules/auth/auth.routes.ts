@@ -17,6 +17,8 @@ authRouter
   .post(validateBody(AuthSchemas.login), authController.login)
   .all(methodNotAllowed);
 
+authRouter.route("/refresh").post(authController.refresh).all(methodNotAllowed);
+
 authRouter
   .route("/resend-otp")
   .post(validateBody(AuthSchemas.resendOtp), authController.resendOtp)
@@ -35,6 +37,11 @@ authRouter
 authRouter
   .route("/session")
   .get(isAuth, authController.getSession)
+  .all(methodNotAllowed);
+
+authRouter
+  .route("/logout")
+  .post(isAuth, authController.logout)
   .all(methodNotAllowed);
 
 export default authRouter;

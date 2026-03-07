@@ -2,6 +2,9 @@ import { ApiError, ApiSuccess } from "../../utils/api-response.utils";
 import { followRepository, type FollowRepository } from "./follow.repository";
 import { userRepository, type UserRepository } from "../user/user.repository";
 import { blogRepository, type BlogRepository } from "../blog/blog.repository";
+import type { FollowListQueryDto } from "./follow.schema";
+
+// note: followerId is the logged in user's id
 
 export class FollowService {
   constructor(
@@ -10,8 +13,8 @@ export class FollowService {
     private blogRepository: BlogRepository,
   ) {}
 
-  public toggleFollowUser = async (followerId: string, followingId: string) => {
-    if (followerId === followingId) {
+  public followUser = async (followerId: string, followingId: string) => {
+    if (followingId === followerId) {
       throw ApiError.badRequest("You cannot follow yourself");
     }
 
@@ -20,121 +23,76 @@ export class FollowService {
       throw ApiError.notFound("User not found");
     }
 
-    const existingFollow =
-      await this.followRepository.findByFollowerIdAndFollowingId(
-        followerId,
-        followingId,
-      );
-
-    if (existingFollow) {
-      await this.followRepository.deleteByFollowerIdAndFollowingId(
-        followerId,
-        followingId,
-      );
-
-      return ApiSuccess.ok("User unfollowed successfully", {
-        following: false,
-      });
+    const result = await this.followRepository.create(followerId, followingId);
+    if (!result) {
+      throw ApiError.badRequest("Failed to follow user");
     }
 
-    await this.followRepository.create(followerId, followingId);
-
-    return ApiSuccess.ok("User followed successfully", {
-      following: true,
-    });
+    return ApiSuccess.ok("User followed successfully", { following: true });
   };
 
-  public getFollowing = async (userId: string, query: GetUserBlogsQueryDto) => {
-    const page = query.page;
-    const limit = query.limit;
-    const skip = (page - 1) * limit;
+  public unfollowUser = async (followerId: string, followingId: string) => {
+    if (followingId === followerId) {
+      throw ApiError.badRequest("You cannot unfollow yourself");
+    }
 
-    const [following, totalCount] = await Promise.all([
-      this.followRepository.findFollowingByUserId({
-        userId,
-        skip,
-        take: limit,
-      }),
-      this.followRepository.countFollowingByUserId(userId),
-    ]);
+    const result = await this.followRepository.deleteByFollowerIdAndFollowingId(
+      followerId,
+      followingId,
+    );
+    if (!result) {
+      throw ApiError.badRequest("Failed to unfollow user");
+    }
 
-    return ApiSuccess.ok("Following retrieved successfully", {
-      following,
-      pagination: {
-        page,
-        limit,
-        totalCount,
-        totalPages: Math.ceil(totalCount / limit),
-      },
-    });
+    return ApiSuccess.ok("User unfollowed successfully", { following: false });
   };
 
-  public getFollowers = async (userId: string, query: GetUserBlogsQueryDto) => {
-    const page = query.page;
-    const limit = query.limit;
-    const skip = (page - 1) * limit;
+  public findFollowing = async (userId: string, query: FollowListQueryDto) => {
+    const result = await this.followRepository.findFollowingByUserId(
+      userId,
+      query,
+    );
 
-    const [followers, totalCount] = await Promise.all([
-      this.followRepository.findFollowersByUserId({
-        userId,
-        skip,
-        take: limit,
-      }),
-      this.followRepository.countFollowersByUserId(userId),
-    ]);
-
-    return ApiSuccess.ok("Followers retrieved successfully", {
-      followers,
-      pagination: {
-        page,
-        limit,
-        totalCount,
-        totalPages: Math.ceil(totalCount / limit),
-      },
-    });
+    return ApiSuccess.ok("Following retrieved successfully", result);
   };
 
-  public getFollowingFeed = async (
+  public findFollowers = async (userId: string, query: FollowListQueryDto) => {
+    const result = await this.followRepository.findFollowersByUserId(
+      userId,
+      query,
+    );
+
+    return ApiSuccess.ok("Followers retrieved successfully", result);
+  };
+
+  public findFollowingFeed = async (
     userId: string,
-    query: GetUserBlogsQueryDto,
+    query: FollowListQueryDto,
   ) => {
     const followingIds =
       await this.followRepository.findFollowingIdsByUserId(userId);
 
-    const page = query.page;
-    const limit = query.limit;
-    const skip = (page - 1) * limit;
-
     if (followingIds.length === 0) {
       return ApiSuccess.ok("Feed retrieved successfully", {
-        blogs: [],
+        items: [],
         pagination: {
-          page,
-          limit,
-          totalCount: 0,
+          total: 0,
+          page: query.page,
+          limit: query.limit,
           totalPages: 0,
         },
       });
     }
 
-    const [blogs, totalCount] = await Promise.all([
-      this.blogRepository.findFeedPosts({
-        followingIds,
-        skip,
-        take: limit,
-      }),
-      this.blogRepository.countFeedPosts(followingIds),
-    ]);
-
-    return ApiSuccess.ok("Feed retrieved successfully", {
-      blogs,
-      pagination: {
-        page,
-        limit,
-        totalCount,
-        totalPages: Math.ceil(totalCount / limit),
-      },
+    const result = await this.blogRepository.findAll({
+      page: query.page,
+      limit: query.limit,
+      search: query.search,
+      authorIds: followingIds,
+      isPublished: true,
     });
+
+    return ApiSuccess.ok("Feed retrieved successfully", result);
   };
 }
 

@@ -3,6 +3,7 @@ import {
   BlogLikeRepository,
   blogLikeRepository,
 } from "../blog-like/blog-like.repository";
+import { generateUniqueSlug } from "./blog.helper";
 import { blogRepository, type BlogRepository } from "./blog.repository";
 import type {
   BlogFiltersDto,
@@ -17,20 +18,18 @@ export class BlogService {
   ) {}
 
   public create = async (dto: CreateBlogDto, userId: string) => {
-    const existing = await this.blogRepository.findBySlug(dto.slug);
+    const slug = await generateUniqueSlug(dto.title, async (candidateSlug) => {
+      const existing = await this.blogRepository.findBySlug(candidateSlug);
+      return !!existing;
+    });
 
-    if (existing) {
-      throw ApiError.conflict("Blog slug already exists");
-    }
-
-    const blog = await this.blogRepository.create(dto, userId);
+    const blog = await this.blogRepository.create(dto, slug, userId);
 
     return ApiSuccess.created("Blog created successfully", blog);
   };
 
   public update = async (id: string, dto: UpdateBlogDto, userId: string) => {
     const existing = await this.blogRepository.findById(id);
-
     if (!existing) {
       throw ApiError.notFound("Blog not found");
     }
@@ -39,16 +38,7 @@ export class BlogService {
       throw ApiError.forbidden("You are not allowed to update this blog");
     }
 
-    if (dto.slug && dto.slug !== existing.slug) {
-      const slugExists = await this.blogRepository.findBySlug(dto.slug);
-
-      if (slugExists) {
-        throw ApiError.conflict("Blog slug already exists");
-      }
-    }
-
     const updated = await this.blogRepository.update(id, dto, userId);
-
     return ApiSuccess.ok("Blog updated successfully", updated);
   };
 
@@ -171,6 +161,16 @@ export class BlogService {
     await this.blogRepository.softDelete(id, userId);
 
     return ApiSuccess.ok("Blog deleted successfully");
+  };
+
+  public findOne = async (id: string) => {
+    const blog = await this.blogRepository.findById(id);
+
+    if (!blog) {
+      throw ApiError.notFound("Blog not found");
+    }
+
+    return ApiSuccess.ok("Blog found successfully", blog);
   };
 }
 

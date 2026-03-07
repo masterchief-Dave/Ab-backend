@@ -1,12 +1,15 @@
-import type { PrismaClient } from "../../../generated/prisma/client";
+import type { Prisma, PrismaClient } from "../../../generated/prisma/client";
 import { prisma } from "../../db/prisma";
+import { paginate } from "../../utils/helpers/paginate.utils";
+import type { FollowListQueryDto } from "./follow.schema";
 
 export class FollowRepository {
   constructor(private readonly prisma: PrismaClient) {}
-  public findByFollowerIdAndFollowingId = async (
+
+  async findByFollowerIdAndFollowingId(
     followerId: string,
     followingId: string,
-  ) => {
+  ) {
     return await this.prisma.userFollow.findUnique({
       where: {
         followerId_followingId: {
@@ -15,21 +18,21 @@ export class FollowRepository {
         },
       },
     });
-  };
+  }
 
-  public create = async (followerId: string, followingId: string) => {
+  async create(followerId: string, followingId: string) {
     return await this.prisma.userFollow.create({
       data: {
         followerId,
         followingId,
       },
     });
-  };
+  }
 
-  public deleteByFollowerIdAndFollowingId = async (
+  async deleteByFollowerIdAndFollowingId(
     followerId: string,
     followingId: string,
-  ) => {
+  ) {
     return await this.prisma.userFollow.delete({
       where: {
         followerId_followingId: {
@@ -38,26 +41,48 @@ export class FollowRepository {
         },
       },
     });
-  };
+  }
 
-  public findFollowingByUserId = async ({
-    userId,
-    skip,
-    take,
-  }: {
-    userId: string;
-    skip: number;
-    take: number;
-  }) => {
-    return await this.prisma.userFollow.findMany({
-      where: {
-        followerId: userId,
+  async findFollowingByUserId(userId: string, query: FollowListQueryDto) {
+    const where: Prisma.UserFollowWhereInput = {
+      followerId: userId,
+      following: {
+        isDeleted: false,
+        ...(query.search
+          ? {
+              OR: [
+                {
+                  firstName: {
+                    contains: query.search,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  lastName: {
+                    contains: query.search,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  email: {
+                    contains: query.search,
+                    mode: "insensitive",
+                  },
+                },
+              ],
+            }
+          : {}),
       },
+    };
+
+    return paginate({
+      delegate: this.prisma.userFollow,
+      where,
+      page: query.page,
+      limit: query.limit,
       orderBy: {
         createdAt: "desc",
       },
-      skip,
-      take,
       include: {
         following: {
           select: {
@@ -72,34 +97,48 @@ export class FollowRepository {
         },
       },
     });
-  };
+  }
 
-  public countFollowingByUserId = async (userId: string) => {
-    return await this.prisma.userFollow.count({
-      where: {
-        followerId: userId,
+  async findFollowersByUserId(userId: string, query: FollowListQueryDto) {
+    const where: Prisma.UserFollowWhereInput = {
+      followingId: userId,
+      follower: {
+        isDeleted: false,
+        ...(query.search
+          ? {
+              OR: [
+                {
+                  firstName: {
+                    contains: query.search,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  lastName: {
+                    contains: query.search,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  email: {
+                    contains: query.search,
+                    mode: "insensitive",
+                  },
+                },
+              ],
+            }
+          : {}),
       },
-    });
-  };
+    };
 
-  public findFollowersByUserId = async ({
-    userId,
-    skip,
-    take,
-  }: {
-    userId: string;
-    skip: number;
-    take: number;
-  }) => {
-    return await this.prisma.userFollow.findMany({
-      where: {
-        followingId: userId,
-      },
+    return paginate({
+      delegate: this.prisma.userFollow,
+      where,
+      page: query.page,
+      limit: query.limit,
       orderBy: {
         createdAt: "desc",
       },
-      skip,
-      take,
       include: {
         follower: {
           select: {
@@ -114,20 +153,15 @@ export class FollowRepository {
         },
       },
     });
-  };
+  }
 
-  public countFollowersByUserId = async (userId: string) => {
-    return await this.prisma.userFollow.count({
-      where: {
-        followingId: userId,
-      },
-    });
-  };
-
-  public findFollowingIdsByUserId = async (userId: string) => {
+  async findFollowingIdsByUserId(userId: string) {
     const records = await this.prisma.userFollow.findMany({
       where: {
         followerId: userId,
+        following: {
+          isDeleted: false,
+        },
       },
       select: {
         followingId: true,
@@ -135,7 +169,7 @@ export class FollowRepository {
     });
 
     return records.map((item) => item.followingId);
-  };
+  }
 }
 
 export const followRepository = new FollowRepository(prisma);
