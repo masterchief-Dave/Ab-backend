@@ -23,6 +23,13 @@ export class FollowController {
   public getFollowing = async (req: Request, res: Response) => {
     const user = req.user as AuthenticatedUser;
     const query = req.query as unknown as FollowListQueryDto;
+    const result = await this.followService.findFollowing(user.id, query);
+    res.status(result.status_code).json(result);
+  };
+
+  public getFollowers = async (req: Request, res: Response) => {
+    const user = req.user as AuthenticatedUser;
+    const query = req.query as unknown as FollowListQueryDto;
     const result = await this.followService.findFollowers(user.id, query);
     res.status(result.status_code).json(result);
   };
