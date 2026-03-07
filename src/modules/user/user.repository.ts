@@ -43,6 +43,21 @@ export class UserRepository {
       },
     });
   }
+
+  public findPublicProfileById = async (userId: string) => {
+    return await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        profilePictureSecureUrl: true,
+        profilePicturePublicId: true,
+        createdAt: true,
+      },
+    });
+  };
 }
 
 export const userRepository = new UserRepository(prisma);
