@@ -1,0 +1,13 @@
+model BlogLike {
+  id        String   @id @default(uuid())
+  blogId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  blog Blog @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([blogId, userId])
+  @@index([userId])
+  @@index([blogId])
+}
