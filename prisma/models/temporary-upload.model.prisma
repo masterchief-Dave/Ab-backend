@@ -1,0 +1,13 @@
+model TemporaryUpload {
+  id          String  @id @default(uuid())
+  publicId    String  @unique
+  isConfirmed Boolean @default(false)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}

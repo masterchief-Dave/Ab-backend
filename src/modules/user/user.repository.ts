@@ -23,6 +23,41 @@ export class UserRepository {
       data: args.userData,
     });
   }
+
+  async updateById(id: string, args: { userData: Prisma.UserUpdateInput }) {
+    return await this.prisma.user.update({
+      where: { id },
+      data: args.userData,
+    });
+  }
+
+  async findProfile(id: string) {
+    return await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        lastName: true,
+        firstName: true,
+        email: true,
+        gender: true,
+        profilePictureSecureUrl: true,
+      },
+    });
+  }
+
+  public findPublicProfileById = async (userId: string) => {
+    return await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        profilePictureSecureUrl: true,
+        profilePicturePublicId: true,
+        createdAt: true,
+      },
+    });
+  };
 }
 
 export const userRepository = new UserRepository(prisma);

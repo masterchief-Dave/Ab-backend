@@ -40,6 +40,15 @@ model User {
   deletedBy    User?   @relation("UsersDeletedBy", fields: [deletedById], references: [id])
   deletedUsers User[]  @relation("UsersDeletedBy")
 
+  deletedBlogs Blog[] @relation("BlogsDeletedBy")
+
+  blogs     Blog[]
+  blogLikes BlogLike[]
+  followers UserFollow[] @relation("UsersFollowed")
+  following UserFollow[] @relation("UsersFollowing")
+
+  temporaryUploads TemporaryUpload[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

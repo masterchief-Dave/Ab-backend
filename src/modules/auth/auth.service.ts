@@ -9,7 +9,12 @@ import { generateAuthToken, verifyAuthToken } from "../../utils/token.utils";
 import { otpService, type OtpService } from "../otp/otp.service";
 import { userRepository, type UserRepository } from "../user/user.repository";
 import type { UserEntity } from "./auth.interface";
-import type { LoginDto, RegisterDto } from "./auth.schema";
+import type {
+  LoginDto,
+  RegisterDto,
+  ResendOtpDto,
+  VerifyOtpDto,
+} from "./auth.schema";
 
 export class AuthService {
   constructor(
@@ -105,6 +110,70 @@ export class AuthService {
 
     await this.emailProducer.sendOtpEmail(dto.email, otp);
     return ApiSuccess.created("Registration successful");
+  };
+
+  public resendOtp = async (dto: ResendOtpDto) => {
+    const { reason, email } = dto;
+
+    const user = await this.userRepository.findByEmail(email);
+
+    if (!user || user.isDeleted) {
+      throw ApiError.notFound("User not found");
+    }
+
+    if (!user.isActive) {
+      throw ApiError.forbidden("Account is inactive");
+    }
+
+    if (reason === OtpReasonEnum.register && user.isVerified) {
+      throw ApiError.badRequest("Email is already verified");
+    }
+
+    const {
+      otp: { otp },
+    } = await this.otpService.issueOTP(email, reason);
+
+    await this.emailProducer.sendOtpEmail(email, otp);
+
+    return ApiSuccess.ok("OTP resent successfully");
+  };
+
+  public verifyOtp = async (dto: VerifyOtpDto) => {
+    const { otp, reason, email } = dto;
+
+    const user = await this.userRepository.findByEmail(email);
+
+    if (!user || user.isDeleted) {
+      throw ApiError.notFound("User not found");
+    }
+
+    if (!user.isActive) {
+      throw ApiError.forbidden("Account is inactive");
+    }
+
+    await this.otpService.verifyOTP({ email, otp, reason });
+
+    if (reason === OtpReasonEnum.register) {
+      await this.userRepository.updateById(user.id, {
+        userData: {
+          isVerified: true,
+        },
+      });
+    }
+
+    return ApiSuccess.ok("OTP verified successfully");
+  };
+
+  public findProfile = async (userId: string) => {
+    const user = await this.userRepository.findProfile(userId);
+    if (!user) {
+      throw ApiError.notFound("User not found.");
+    }
+    const profile = await this.userRepository.findProfile(userId);
+    if (!profile) {
+      throw ApiError.notFound("User profile not found.");
+    }
+    return ApiSuccess.ok("Profile found", profile);
   };
 }
 

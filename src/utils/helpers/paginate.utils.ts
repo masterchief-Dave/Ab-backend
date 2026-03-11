@@ -17,7 +17,7 @@ type PaginateOptions = {
   countWhere?: Record<string, any>;
 };
 
-type PaginateResult<T> = {
+export type PaginateResult<T> = {
   documents: T[];
   pagination: {
     totalCount: number;
